@@ -2,8 +2,11 @@ from binance_f import RequestClient
 from binance_f.constant.test import *
 from binance_f.base.printobject import *
 from binance_f.model.constant import *
-
+import pandas as pd
 import json
+from finta import TA
+import numpy as np
+import matplotlib.pyplot as plt
 
 #Load our credentials from json, instead of hard coding.
 api_info = json.load(open ("keys.json", "r"))
@@ -64,7 +67,17 @@ def close_position(client, _market="BTCUSDT"):
     execute_order(client, _market=_market,
                   _qty = qty,
                   _side = _side)
-    
+
+
+def get_liquidation(client, _market="BTCUSDT"):
+    position = get_specific_positon(client, _market)
+    price = position.liquidationPrice
+    return price
+
+def get_entry(client, _market="BTCUSDT"):
+    position = get_specific_positon(client, _market)
+    price = position.entryPrice
+    return price
 
 def execute_order(client, _market="BTCUSDT", _type = "MARKET", _side="BUY", _position_side="BOTH", _qty = 1.0):
     client.post_order(symbol=_market,
@@ -81,6 +94,11 @@ def calculate_position_size(client, usdt_balance=1.0, _market="BTCUSDT", _levera
     qty = qty * 0.99
     
     return qty
+
+def get_market_price(client, _market="BTCUSDT"):
+    price = client.get_symbol_price_ticker(_market)
+    price = price[0].price
+    return price
     
 def get_market_precision(client, _market="BTCUSDT"):
     
@@ -98,32 +116,6 @@ def round_to_precision(_qty, _precision):
     return float(new_qty)
 
 #%%     Strategy codes
-
-
-
-#%%
-
-market = "BNBUSDT"
-leverage = 1
-margin_type = "CROSS"
-#usdt = get_futures_balance(client, _asset = "USDT")
-#initialise_futures(client, _market=market)
-
-#qty = calculate_position_size(client, usdt_balance=usdt, _market=market)
-#precision = get_market_precision(client, _market=market)
-
-#qty = round_to_precision(qty, precision)
-
-#execute_order(client, _qty=qty, _side="SELL" , _market=market)
-
-#close_position(client, _market="BNBUSDT")
-
-
-
-
-
-#%%
-
 def convert_candles(candles):
     o = []
     h = []
@@ -166,13 +158,180 @@ def construct_heikin_ashi(o, h, l, c):
 
     return h_o, h_h, h_l, h_c
 
-candles = client.get_candlestick_data("BNBUSDT", interval="5m")
-o, h, l, c, v = convert_candles(candles)
-h_o, h_h, h_l, h_c = construct_heikin_ashi(o, h, l, c)
+def to_dataframe(o, h, l, c, v):
+    df = pd.DataFrame()
+    
+    df['open'] = o
+    df['high'] = h
+    df['low'] = l
+    df['close'] = c
+    df['volume'] = v
+    
+    return df
+    
+def ema(s, n):
+    s = np.array(s)
+    out = []
+    j = 1
 
+    #get n sma first and calculate the next n period ema
+    sma = sum(s[:n]) / n
+    multiplier = 2 / float(1 + n)
+    out.append(sma)
 
+    #EMA(current) = ( (Price(current) - EMA(prev) ) x Multiplier) + EMA(prev)
+    out.append(( (s[n] - sma) * multiplier) + sma)
 
+    #now calculate the rest of the values
+    for i in s[n+1:]:
+        tmp = ( (i - out[j]) * multiplier) + out[j]
+        j = j + 1
+        out.append(tmp)
 
+    return np.array(out)
 
+#def talon_strategy_one():
+    # slow = 8
+    # fast = 5 
+    # ema_0 = ema(h_c, 13)
+    
+    # vh1 = (np.array(h_l) + np.array(h_c)) / 2
+    # vh1 = pd.Series(vh1).rolling(fast).max().dropna().tolist()
+    # vh1 = ema(vh1, fast)
+    
+    # vl1 = (np.array(h_h) + np.array(h_c)) / 2
+    # vl1 = pd.Series(vl1).rolling(slow).max().dropna().tolist()
+    # vl1 = ema(vl1, slow)
+    
+    
+    # e_ema1 = ema(h_c, 1)
+    # e_ema2 = ema(e_ema1, 1)
+    # e_ema3 = ema(e_ema2, 1)
+    
+    # tema = 1 * (e_ema1 - e_ema2) + e_ema3
+    
+    # e_e1 = ema(h_c, 8)
+    # e_e2 = ema(e_e1, 5)
+    
+    
+    # dema = 2 * e_e1 - e_e2
 
+def avarage_true_range(high, low, close):
+    
+    atr = []
+    
+    for i, v in enumerate(high):
+        if i!= 0:
+            value = np.max([high[i] - low[i], np.abs(high[i] - close[i-1]), np.abs(low[i] - close[i-1])])
+            atr.append(value)
+    return np.array(atr)
 
+def trading_signal(h_o, h_h, h_l, h_c, use_last=False):
+    factor = 1
+    pd = 1
+    
+    hl2 = (np.array(h_h) + np.array(h_l)) / 2
+    hl2 = hl2[1:]
+    
+    atr = avarage_true_range(h_h, h_l, h_c)
+    
+    up = hl2 - (factor * atr)
+    dn = hl2 + (factor * atr)
+    
+    trend_up = [0]
+    trend_down = [0]
+    
+    for i, v in enumerate(h_c[1:]):
+        if i != 0:
+            
+            if h_c[i-1] > trend_up[i-1]:
+                trend_up.append(np.max([up[i], trend_up[i-1]]))
+            else:
+                trend_up.append(up[i])
+                
+            if h_c[i-1] < trend_down[i-1]:
+                trend_down.append(np.min([dn[i], trend_down[i-1]]))
+            else:
+                trend_down.append(dn[i])
+        
+    
+    trend = []
+    last = 0
+    for i, v in enumerate(h_c):
+        if i != 0:
+            if h_c[i] > trend_down[i-1]:
+                tr = 1
+                last = tr
+            elif h_c[i] < trend_up[i-1]:
+                tr = -1
+                last = tr
+            else:
+                tr = last
+            trend.append(tr)
+        
+    entry = [0]
+    last = 0
+    for i, v in enumerate(trend):
+        if i != 0:
+            if trend[i] == 1 and trend[i-1] == -1:
+                entry.append(1)
+                last = 1
+            
+            elif trend[i] == -1 and trend[i-1] == 1:
+                entry.append(-1)
+                last = -1
+            
+            else:
+                if use_last:
+                    entry.append(last)
+                else:
+                    entry.append(0)
+    
+    return entry
+
+def get_signal(client, _market="BTCUSDT", _period="15m", use_last=False):
+    candles = client.get_candlestick_data(_market, interval=_period)
+    o, h, l, c, v = convert_candles(candles)
+    h_o, h_h, h_l, h_c = construct_heikin_ashi(o, h, l, c)
+    ohlcv = to_dataframe(h_o, h_h, h_l, h_c, v)
+    entry = trading_signal(h_o, h_h, h_l, h_c, use_last)
+    return entry
+    
+#%%
+#market = "BNBUSDT"
+#leverage = 1
+#margin_type = "CROSS"
+#usdt = get_futures_balance(client, _asset = "USDT")
+#initialise_futures(client, _market=market)
+
+#qty = calculate_position_size(client, usdt_balance=usdt, _market=market)
+#precision = get_market_precision(client, _market=market)
+
+#qty = round_to_precision(qty, precision)
+
+#execute_order(client, _qty=qty, _side="BUY" , _market=market)
+
+#close_position(client, _market="BNBUSDT")
+entry = get_signal(client, _market="BNBUSDT", _period="5m")
+
+exit_trigger = get_liquidation(client, _market="BNBUSDT")
+entry_price = get_entry(client, _market="BNBUSDT")
+
+market_price = get_market_price(client, _market="BNBUSDT")
+
+sell_price_trigger = exit_trigger
+in_position = True
+
+side = 0 
+
+if entry[-2] == -1:
+    print("SELL")
+    side = -1
+elif entry[-2] == 1:
+    print("BUY")
+    side = 1
+    
+plt.plot(entry)
+#plt.plot(trend_up)
+#plt.plot(trend_down)
+#plt.plot(h_c)
