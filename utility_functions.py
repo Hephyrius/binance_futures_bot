@@ -96,6 +96,7 @@ def round_to_precision(_qty, _precision):
     new_qty = str(_qty).split(".")[1][:_precision]
     new_qty = str(_qty).split(".")[0] + "." + new_qty
     return float(new_qty)
+
 #%%     Strategy codes
 
 
@@ -119,7 +120,59 @@ margin_type = "CROSS"
 
 
 
-client.get_candlestick_data("BNBUSDT", interval="5m")
+
+
+#%%
+
+def convert_candles(candles):
+    o = []
+    h = []
+    l = []
+    c = []
+    v = []
+    
+    for candle in candles:
+        o.append(float(candle.open))
+        h.append(float(candle.high))
+        l.append(float(candle.low))
+        c.append(float(candle.close))
+        v.append(float(candle.volume))
+        
+    return o, h, l, c, v
+    
+
+def construct_heikin_ashi(o, h, l, c):
+    h_o = []
+    h_h = []
+    h_l = []
+    h_c = []
+    
+    for i, v in enumerate(o):
+        
+        close_price = (o[i] + h[i] + l[i] + c[i]) / 4
+        
+        if i == 0:
+            open_price = close_price
+        else:
+            open_price = (h_o[-1] + h_c[-1]) / 2
+        
+        high_price = max([h[i], close_price, open_price])
+        low_price = min([l[i], close_price, open_price])
+        
+        h_o.append(open_price)
+        h_h.append(high_price)
+        h_l.append(low_price)
+        h_c.append(close_price)
+
+    return h_o, h_h, h_l, h_c
+
+candles = client.get_candlestick_data("BNBUSDT", interval="5m")
+o, h, l, c, v = convert_candles(candles)
+h_o, h_h, h_l, h_c = construct_heikin_ashi(o, h, l, c)
+
+
+
+
 
 
 
