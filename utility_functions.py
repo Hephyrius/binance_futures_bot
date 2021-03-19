@@ -1,62 +1,47 @@
-from binance.client import Client
+from binance_f import RequestClient
+from binance_f.constant.test import *
+from binance_f.base.printobject import *
+from binance_f.model.constant import *
+
+import json
+
+#Load our credentials from json, instead of hard coding.
+api_info = json.load(open ("keys.json", "r"))
+api_key = api_info['api_key']
+api_secret = api_info['api_secret']
+
+#Connect to the binance api
+client = RequestClient(api_key=api_key, secret_key=api_secret)
 
 
-client = Client(api_key, api_secret)
 
-# get market depth
-#depth = client.get_order_book(symbol='BNBBTC')
-
-# place a test market buy order, to place an actual order use the create_order function
-#order = client.create_test_order(
-#    symbol='BNBBTC',
-#    side=Client.SIDE_BUY,
-#    type=Client.ORDER_TYPE_MARKET,
-#    quantity=100)
-
-# get all symbol prices
-#prices = client.get_all_tickers()
-
-
-# start aggregated trade websocket for BNBBTC
-#def process_message(msg):
-#    print("message type: {}".format(msg['e']))
-#    print(msg)
-    # do something
-
-#from binance.websockets import BinanceSocketManager
-#bm = BinanceSocketManager(client)
-#bm.start_aggtrade_socket('BNBBTC', process_message)
-#bm.start()
-
-# get historical kline data from any date range
-
-# fetch 1 minute klines for the last day up until now
-#klines = client.get_historical_klines("BNBBTC", Client.KLINE_INTERVAL_1MINUTE, "1 day ago UTC")
-
-# fetch 30 minute klines for the last month of 2017
-#klines = client.get_historical_klines("ETHBTC", Client.KLINE_INTERVAL_30MINUTE, "1 Dec, 2017", "1 Jan, 2018")
-
-# fetch weekly klines since it listed
-#klines = client.get_historical_klines("NEOBTC", Client.KLINE_INTERVAL_1WEEK, "1 Jan, 2017")
-
+#Get futures balances. We are interested in USDT by default as this is what we use as margin.
 def get_futures_balance(client, _asset = "USDT"):
-    balances = client.futures_account_balance()
+    balances = client.get_balance()
     asset_balance = 0
     for balance in balances:
-        if balance['asset'] == _asset:
-            asset_balance = balance['balance']
+        if balance.asset == _asset:
+            asset_balance = balance.balance
             break
     
     return asset_balance
 
-def initialise_futures(client, _market="BTCUSDT", _leverage=1, _margin_type="CROSS"):
-    client.futures_change_leverage(_market, _leverage, _margin_type)
+#Init the market we want to trade. First we change leverage type
+#then we change margin type
+def initialise_futures(client, _market="BTCUSDT", _leverage=1, _margin_type="CROSSED"):
+    client.change_initial_leverage(_market, _leverage)
+    client.change_margin_type(_market, _margin_type)
+
+def get_orders(client, _market="BTCUSDT"):
+    orders = client.get_open_orders("btcusdt")
+    
+    return orders, len(orders)
 
 #%%
 
 market = "BTCUSDT"
 leverage = 1
 margin_type = "CROSS"
-usdt = get_futures_balance(client, asset = "USDT")
-
-
+#usdt = get_futures_balance(client, _asset = "USDT")
+#initialise_futures(client)
+get_orders(client)
