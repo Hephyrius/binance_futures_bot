@@ -96,24 +96,30 @@ def round_to_precision(_qty, _precision):
     new_qty = str(_qty).split(".")[1][:_precision]
     new_qty = str(_qty).split(".")[0] + "." + new_qty
     return float(new_qty)
-    
-    
+#%%     Strategy codes
+
+
+
 #%%
 
 market = "BNBUSDT"
 leverage = 1
 margin_type = "CROSS"
-usdt = get_futures_balance(client, _asset = "USDT")
-initialise_futures(client, _market=market)
+#usdt = get_futures_balance(client, _asset = "USDT")
+#initialise_futures(client, _market=market)
 
+#qty = calculate_position_size(client, usdt_balance=usdt, _market=market)
+#precision = get_market_precision(client, _market=market)
 
-qty = calculate_position_size(client, usdt_balance=usdt, _market=market)
-precision = get_market_precision(client, _market=market)
+#qty = round_to_precision(qty, precision)
 
-qty = round_to_precision(qty, precision)
-
-(qty, precision)
 #execute_order(client, _qty=qty, _side="SELL" , _market=market)
 
+#close_position(client, _market="BNBUSDT")
 
-close_position(client, _market="BNBUSDT")
+
+
+client.get_candlestick_data("BNBUSDT", interval="5m")
+
+
+
