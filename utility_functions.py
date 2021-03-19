@@ -320,68 +320,69 @@ exit_price_trigger = 0
 in_position = False
 side = 0
 
-if in_position == False:
-    entry = get_signal(client, _market=market, _period="5m")
-    if entry[-2] == -1:
-        print("SELL")
-        qty = calculate_position(client, market)
-        execute_order(client, _qty=qty, _side="SELL" , _market=market)
-        side = -1
-        in_position = True
-    elif entry[-2] == 1:
-        print("BUY")
-        qty = calculate_position(client, market)
-        execute_order(client, _qty=qty, _side="BUY" , _market=market)
-        side = 1
-        in_position = True
+while True:
+    if in_position == False:
+        entry = get_signal(client, _market=market, _period="5m")
+        if entry[-2] == -1:
+            print("SELL")
+            qty = calculate_position(client, market)
+            execute_order(client, _qty=qty, _side="SELL" , _market=market)
+            side = -1
+            in_position = True
+        elif entry[-2] == 1:
+            print("BUY")
+            qty = calculate_position(client, market)
+            execute_order(client, _qty=qty, _side="BUY" , _market=market)
+            side = 1
+            in_position = True
+            
+    elif in_position == True:
+        entry = get_signal(client, _market=market, _period="5m")
+        market_price = get_market_price(client, _market=market)
         
-elif in_position == True:
-    entry = get_signal(client, _market=market, _period="5m")
-    market_price = get_market_price(client, _market=market)
-    
-    if entry[-2] != side:
-        close_position(client, _market=market)
-        in_position = False
-        side = 0
-        exit_price_trigger = 0
-    
-    if entry_price == 0:
-        entry_price = get_entry(client, _market=market)
-     
-    if exit_price_trigger == 0:
-        exit_price_trigger = entry_price
+        if entry[-2] != side:
+            close_position(client, _market=market)
+            in_position = False
+            side = 0
+            exit_price_trigger = 0
+        
+        if entry_price == 0:
+            entry_price = get_entry(client, _market=market)
+         
+        if exit_price_trigger == 0:
+            exit_price_trigger = entry_price
+            
+            if side == -1:
+                exit_price_trigger = exit_price_trigger * 1.025
+            elif side == 1:
+                exit_price_trigger = exit_price_trigger * 0.975
+                
         
         if side == -1:
-            exit_price_trigger = exit_price_trigger * 1.025
-        elif side == 1:
-            exit_price_trigger = exit_price_trigger * 0.975
             
-    
-    if side == -1:
+            if market_price < entry_price:
+                new_exit_price_trigger = (market_price*0.5) + (entry_price*0.5)
+                if new_exit_price_trigger < exit_price_trigger:
+                    exit_price_trigger = new_exit_price_trigger
+            
+            if market_price > exit_price_trigger:
+                close_position(client, _market=market)
+                in_position = False
+                side = 0
+                exit_price_trigger = 0
+            
+        if side == 1:
+            
+            if market_price > entry_price:
+                new_exit_price_trigger = (market_price*0.5) + (entry_price*0.5)
+                if new_exit_price_trigger > exit_price_trigger:
+                    exit_price_trigger = new_exit_price_trigger
+            
+            if market_price < exit_price_trigger:
+                close_position(client, _market=market)
+                in_position = False
+                side = 0
+                exit_price_trigger = 0
         
-        if market_price < entry_price:
-            new_exit_price_trigger = (market_price*0.6) + (entry_price*0.4)
-            if new_exit_price_trigger < exit_price_trigger:
-                exit_price_trigger = new_exit_price_trigger
-        
-        if market_price > exit_price_trigger:
-            close_position(client, _market=market)
-            in_position = False
-            side = 0
-            exit_price_trigger = 0
-        
-    if side == 1:
-        
-        if market_price > entry_price:
-            new_exit_price_trigger = (market_price*0.6) + (entry_price*0.4)
-            if new_exit_price_trigger > exit_price_trigger:
-                exit_price_trigger = new_exit_price_trigger
-        
-        if market_price < exit_price_trigger:
-            close_position(client, _market=market)
-            in_position = False
-            side = 0
-            exit_price_trigger = 0
-    
-time.sleep(10)
+    time.sleep(15)
     
