@@ -5,7 +5,7 @@ from binance_f.model.constant import *
 import pandas as pd
 import numpy as np
 
-
+#create a binance request client
 def init_client(api_key, api_secret):
     client = RequestClient(api_key=api_key, secret_key=api_secret)
     return client
@@ -34,14 +34,17 @@ def initialise_futures(client, _market="BTCUSDT", _leverage=1, _margin_type="CRO
     except Exception as e:
         print(e)
 
+#get all of our open orders in a market
 def get_orders(client, _market="BTCUSDT"):
     orders = client.get_open_orders(_market)
     return orders, len(orders)
 
+#get all of our open trades
 def get_positions(client):
     positions = client.get_position_v2()
     return positions
 
+#get trades we opened in the market the bot is trading in
 def get_specific_positon(client, _market="BTCUSDT"):
     positions = get_positions(client)
     
@@ -51,6 +54,7 @@ def get_specific_positon(client, _market="BTCUSDT"):
     
     return position
 
+#close opened position
 def close_position(client, _market="BTCUSDT"):
     position = get_specific_positon(client, _market)
     qty = position.positionAmt
@@ -67,16 +71,19 @@ def close_position(client, _market="BTCUSDT"):
                   _side = _side)
 
 
+#get the liquidation price of the position we are in. - We don't use this - be careful!
 def get_liquidation(client, _market="BTCUSDT"):
     position = get_specific_positon(client, _market)
     price = position.liquidationPrice
     return price
 
+#Get the entry price of the position the bot is in
 def get_entry(client, _market="BTCUSDT"):
     position = get_specific_positon(client, _market)
     price = position.entryPrice
     return price
 
+#Execute an order, this can open and close a trade
 def execute_order(client, _market="BTCUSDT", _type = "MARKET", _side="BUY", _position_side="BOTH", _qty = 1.0):
     client.post_order(symbol=_market,
                       ordertype=_type,
@@ -84,6 +91,7 @@ def execute_order(client, _market="BTCUSDT", _type = "MARKET", _side="BUY", _pos
                       positionSide=_position_side,
                       quantity = _qty)
 
+#calculate how big a position we can open with the margin we have and the leverage we are using
 def calculate_position_size(client, usdt_balance=1.0, _market="BTCUSDT", _leverage=1):
     price = client.get_symbol_price_ticker(_market)
     price = price[0].price
@@ -93,11 +101,13 @@ def calculate_position_size(client, usdt_balance=1.0, _market="BTCUSDT", _levera
     
     return qty
 
+# get the current market price
 def get_market_price(client, _market="BTCUSDT"):
     price = client.get_symbol_price_ticker(_market)
     price = price[0].price
     return price
-    
+
+# get the precision of the market, this is needed to avoid errors when creating orders
 def get_market_precision(client, _market="BTCUSDT"):
     
     market_data = client.get_exchange_information()
@@ -108,12 +118,13 @@ def get_market_precision(client, _market="BTCUSDT"):
             break
     return precision
 
+# round the position size we can open to the precision of the market
 def round_to_precision(_qty, _precision):
     new_qty = str(_qty).split(".")[1][:_precision]
     new_qty = str(_qty).split(".")[0] + "." + new_qty
     return float(new_qty)
 
-#%%     Strategy codes
+# convert from client candle data into a set of lists
 def convert_candles(candles):
     o = []
     h = []
@@ -130,7 +141,7 @@ def convert_candles(candles):
         
     return o, h, l, c, v
     
-
+#convert list candle data into list of heikin ashi candles
 def construct_heikin_ashi(o, h, l, c):
     h_o = []
     h_h = []
@@ -156,6 +167,7 @@ def construct_heikin_ashi(o, h, l, c):
 
     return h_o, h_h, h_l, h_c
 
+#create a dataframe for our candles
 def to_dataframe(o, h, l, c, v):
     df = pd.DataFrame()
     
@@ -167,6 +179,7 @@ def to_dataframe(o, h, l, c, v):
     
     return df
     
+#Exponential moving avg - unused
 def ema(s, n):
     s = np.array(s)
     out = []
@@ -188,6 +201,7 @@ def ema(s, n):
 
     return np.array(out)
 
+#Avarage true range function used by our trading strat
 def avarage_true_range(high, low, close):
     
     atr = []
@@ -198,6 +212,8 @@ def avarage_true_range(high, low, close):
             atr.append(value)
     return np.array(atr)
 
+#Our trading strategy - it takes in heikin ashi open, high, low and close data and returns a list of signal values
+#signals are -1 for short, 1 for long and 0 for do nothing
 def trading_signal(h_o, h_h, h_l, h_c, use_last=False):
     factor = 1
     pd = 1
@@ -261,8 +277,8 @@ def trading_signal(h_o, h_h, h_l, h_c, use_last=False):
     
     return entry
 
-#%% strategy execution functions
-
+#get the data from the market, create heikin ashi candles and then generate signals
+#return the signals to the bot
 def get_signal(client, _market="BTCUSDT", _period="15m", use_last=False):
     candles = client.get_candlestick_data(_market, interval=_period)
     o, h, l, c, v = convert_candles(candles)
@@ -271,6 +287,7 @@ def get_signal(client, _market="BTCUSDT", _period="15m", use_last=False):
     entry = trading_signal(h_o, h_h, h_l, h_c, use_last)
     return entry
 
+#calculate a rounded position size for the bot, based on current USDT holding, leverage and market
 def calculate_position(client, _market="BTCUSDT", _leverage=1):
     usdt = get_futures_balance(client, _asset = "USDT")
     qty = calculate_position_size(client, usdt_balance=usdt, _market=_market, _leverage=_leverage)
