@@ -1,6 +1,13 @@
 # binance_futures_bot
 
-A simple bot that trades futures on binance. It can be modified for use with any USDT futures market, leverage and time frame combinatiob by editing the settings.json file. 
+A simple bot that trades futures on binance. 
+
+##### Table of Contents  
+[Disclaimer](#Disclaimer)  
+[Trading Strategy](#Trading-Strategy)
+[Setup](#Setup)  
+[Useage](#Useage)  
+[Modification](#Modification)  
 
 ## Disclaimer
 
@@ -16,5 +23,6 @@ The bot trades a strategy called the ['TalonSniper'](https://www.tradingview.com
 
 I came across this strategy while browsing trading view. On the surface the strategy seems to find points where trends can be considered "confirmed". The strategy was reimplemented by looking at the code in the trading view pine editor and then recreating it in python. This can be found in the trading_signal() function of the bot_functions.py file.
 
+# Modification
 
-
+The bot can be modified for use with any USDT futures market, leverage and time frame combinatiob by editing the settings.json file. 
