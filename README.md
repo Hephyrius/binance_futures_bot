@@ -66,7 +66,7 @@ def new_trading_signal(h_o, h_h, h_l, h_c, use_last=False):
 
     entry = [0]
     last = 0
-    for i, v in enumerate(trend):
+    for i, v in enumerate(h_o):
         if i != 0:
             if h_o[i-1] < h_c[i-1]:
                 entry.append(1)
