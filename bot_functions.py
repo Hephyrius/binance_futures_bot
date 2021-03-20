@@ -3,11 +3,12 @@ from binance_f.constant.test import *
 from binance_f.base.printobject import *
 from binance_f.model.constant import *
 import pandas as pd
-import json
-from finta import TA
 import numpy as np
-import matplotlib.pyplot as plt
-import time
+
+
+def init_client(api_key, api_secret):
+    client = RequestClient(api_key=api_key, secret_key=api_secret)
+    return client
 
 #Get futures balances. We are interested in USDT by default as this is what we use as margin.
 def get_futures_balance(client, _asset = "USDT"):
@@ -187,32 +188,6 @@ def ema(s, n):
 
     return np.array(out)
 
-#def talon_strategy_one():
-    # slow = 8
-    # fast = 5 
-    # ema_0 = ema(h_c, 13)
-    
-    # vh1 = (np.array(h_l) + np.array(h_c)) / 2
-    # vh1 = pd.Series(vh1).rolling(fast).max().dropna().tolist()
-    # vh1 = ema(vh1, fast)
-    
-    # vl1 = (np.array(h_h) + np.array(h_c)) / 2
-    # vl1 = pd.Series(vl1).rolling(slow).max().dropna().tolist()
-    # vl1 = ema(vl1, slow)
-    
-    
-    # e_ema1 = ema(h_c, 1)
-    # e_ema2 = ema(e_ema1, 1)
-    # e_ema3 = ema(e_ema2, 1)
-    
-    # tema = 1 * (e_ema1 - e_ema2) + e_ema3
-    
-    # e_e1 = ema(h_c, 8)
-    # e_e2 = ema(e_e1, 5)
-    
-    
-    # dema = 2 * e_e1 - e_e2
-
 def avarage_true_range(high, low, close):
     
     atr = []
@@ -302,99 +277,3 @@ def calculate_position(client, _market="BTCUSDT", _leverage=1):
     precision = get_market_precision(client, _market=_market)
     qty = round_to_precision(qty, precision)
     return qty
-
-#%%
-
-#Load our credentials from json, instead of hard coding.
-api_info = json.load(open ("keys.json", "r"))
-api_key = api_info['api_key']
-api_secret = api_info['api_secret']
-
-#Connect to the binance api
-client = RequestClient(api_key=api_key, secret_key=api_secret)
-
-market = "BNBUSDT"
-leverage = 3
-margin_type = "CROSSED"
-period = "5m"
-
-initialise_futures(client, _market=market, _leverage=leverage)
-
-entry_price = 0
-exit_price_trigger = 0
-liquidation_price = 0
-in_position = False
-side = 0
-
-while True:
-    if in_position == False:
-        entry = get_signal(client, _market=market, _period=period)
-        if entry[-2] == -1:
-            print("SELL")
-            initialise_futures(client, _market=market, _leverage=leverage)
-            qty = calculate_position(client, market, _leverage=leverage)
-            execute_order(client, _qty=qty, _side="SELL" , _market=market)
-            side = -1
-            in_position = True
-        elif entry[-2] == 1:
-            print("BUY")
-            initialise_futures(client, _market=market, _leverage=leverage)
-            qty = calculate_position(client, market, _leverage=leverage)
-            execute_order(client, _qty=qty, _side="BUY" , _market=market)
-            side = 1
-            in_position = True
-            
-    elif in_position == True:
-        entry = get_signal(client, _market=market, _period=period)
-        market_price = get_market_price(client, _market=market)
-        
-        if entry[-2] != side:
-            close_position(client, _market=market)
-            in_position = False
-            side = 0
-            exit_price_trigger = 0
-        
-        if entry_price == 0:
-            entry_price = get_entry(client, _market=market)
-         
-        if exit_price_trigger == 0:
-            liquidation_price = get_liquidation(client, _market=market)
-            exit_price_trigger = liquidation_price
-            
-            if side == -1:
-                exit_price_trigger = entry_price * 1.025
-            elif side == 1:
-                exit_price_trigger = entry_price * 0.975
-                
-        
-        if side == -1:
-            
-            if market_price < entry_price:
-                new_exit_price_trigger = (liquidation_price * 0.2) + (market_price*0.4) + (entry_price*0.4)
-                if new_exit_price_trigger < exit_price_trigger:
-                    exit_price_trigger = new_exit_price_trigger
-            
-            if market_price > exit_price_trigger:
-                close_position(client, _market=market)
-                in_position = False
-                side = 0
-                exit_price_trigger = 0
-                liquidation_price = 0
-            
-        if side == 1:
-            
-            if market_price > entry_price:
-                new_exit_price_trigger = (liquidation_price * 0.2) + (market_price*0.4) + (entry_price*0.4)
-                if new_exit_price_trigger > exit_price_trigger:
-                    exit_price_trigger = new_exit_price_trigger
-            
-            if market_price < exit_price_trigger:
-                close_position(client, _market=market)
-                in_position = False
-                side = 0
-                exit_price_trigger = 0
-                liquidation_price = 0
-        
-        
-    time.sleep(10)
-    
