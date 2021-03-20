@@ -296,9 +296,9 @@ def get_signal(client, _market="BTCUSDT", _period="15m", use_last=False):
     entry = trading_signal(h_o, h_h, h_l, h_c, use_last)
     return entry
 
-def calculate_position(client, _market="BTCUSDT"):
+def calculate_position(client, _market="BTCUSDT", _leverage=1):
     usdt = get_futures_balance(client, _asset = "USDT")
-    qty = calculate_position_size(client, usdt_balance=usdt, _market=_market)
+    qty = calculate_position_size(client, usdt_balance=usdt, _market=_market, _leverage=_leverage)
     precision = get_market_precision(client, _market=_market)
     qty = round_to_precision(qty, precision)
     return qty
@@ -332,14 +332,14 @@ while True:
         if entry[-2] == -1:
             print("SELL")
             initialise_futures(client, _market=market, _leverage=leverage)
-            qty = calculate_position(client, market)
+            qty = calculate_position(client, market, _leverage=leverage)
             execute_order(client, _qty=qty, _side="SELL" , _market=market)
             side = -1
             in_position = True
         elif entry[-2] == 1:
             print("BUY")
             initialise_futures(client, _market=market, _leverage=leverage)
-            qty = calculate_position(client, market)
+            qty = calculate_position(client, market, _leverage=leverage)
             execute_order(client, _qty=qty, _side="BUY" , _market=market)
             side = 1
             in_position = True
