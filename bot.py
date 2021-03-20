@@ -41,8 +41,12 @@ while True:
             bf.initialise_futures(client, _market=market, _leverage=leverage)
             qty = bf.calculate_position(client, market, _leverage=leverage)
             bf.execute_order(client, _qty=qty, _side="SELL" , _market=market)
+            market_price = bf.get_market_price(client, _market=market)
             side = -1
             in_position = True
+            bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
+             _cause="Signal Change", _trigger_price=0, 
+             _market_price=market_price, _type="Enter")
             
         #if the second last signal in the generated set of data is 1, then open a LONG
         elif entry[-2] == 1:
@@ -50,8 +54,12 @@ while True:
             bf.initialise_futures(client, _market=market, _leverage=leverage)
             qty = bf.calculate_position(client, market, _leverage=leverage)
             bf.execute_order(client, _qty=qty, _side="BUY" , _market=market)
+            market_price = bf.get_market_price(client, _market=market)
             side = 1
             in_position = True
+            bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
+             _cause="Signal Change", _trigger_price=0, 
+             _market_price=market_price, _type="Enter")
     
     #If already in a position then check market and decide when to exit
     elif in_position == True:
@@ -66,6 +74,10 @@ while True:
         #then sell our position. The bot will open a new position on the opposite side when it loops back around!
         if entry[-2] != side and entry[-2] != 0:
             bf.close_position(client, _market=market)
+            bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
+                         _cause="Signal Change", _trigger_price=exit_price_trigger, 
+                         _market_price=market_price, _type="EXIT")
+            
             in_position = False
             side = 0
             exit_price_trigger = 0
@@ -97,6 +109,10 @@ while True:
             #if the price goes above our exit trigger, then exit the trade
             if market_price > exit_price_trigger:
                 bf.close_position(client, _market=market)
+                bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side, 
+                             _cause="Trigger Executed", _trigger_price=exit_price_trigger, 
+                             _market_price=market_price, _type="EXIT")
+            
                 in_position = False
                 side = 0
                 exit_price_trigger = 0
@@ -115,6 +131,9 @@ while True:
             #if the price goes below our exit trigger, then exit the trade
             if market_price < exit_price_trigger:
                 bf.close_position(client, _market=market)
+                bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side, 
+                             _cause="Trigger Executed", _trigger_price=exit_price_trigger, 
+                             _market_price=market_price, _type="EXIT")
                 in_position = False
                 side = 0
                 exit_price_trigger = 0

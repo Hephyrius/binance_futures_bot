@@ -4,6 +4,7 @@ from binance_f.base.printobject import *
 from binance_f.model.constant import *
 import pandas as pd
 import numpy as np
+import time
 
 #create a binance request client
 def init_client(api_key, api_secret):
@@ -277,6 +278,8 @@ def trading_signal(h_o, h_h, h_l, h_c, use_last=False):
     
     return entry
 
+
+
 #get the data from the market, create heikin ashi candles and then generate signals
 #return the signals to the bot
 def get_signal(client, _market="BTCUSDT", _period="15m", use_last=False):
@@ -294,3 +297,26 @@ def calculate_position(client, _market="BTCUSDT", _leverage=1):
     precision = get_market_precision(client, _market=_market)
     qty = round_to_precision(qty, precision)
     return qty
+
+#function for logging trades to csv for later analysis
+def log_trade(_qty=0, _market="BTCUSDT", _leverage=1, _side="long", _cause="signal", _trigger_price=0, _market_price=0, _type="exit"):
+    df = pd.read_csv("trade_log.csv")
+    df2 = pd.DataFrame()
+    df2['time'] = [time.time()]
+    df2['market'] = [_market]
+    df2['qty'] = [_qty]
+    df2['leverage'] = [_leverage]
+    df2['cause'] = [_cause]
+    df2['side'] = [_side]
+    df2['trigger_price'] = [_trigger_price]
+    df2['market_price'] = [_market_price]
+    df2['type'] = [_type]
+    
+    df = df.append(df2, ignore_index=True)
+    df.to_csv("trade_log.csv", index=False)
+    
+    
+    
+    
+    
+    
