@@ -1,6 +1,6 @@
 {
 	"market": "BTCUSDT",
 	"leverage": "1",
-	"period": "5m",
+	"period": "1m",
 	"margin_type": "CROSSED",
 }

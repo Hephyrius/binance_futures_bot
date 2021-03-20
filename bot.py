@@ -10,18 +10,20 @@ api_secret = api_info['api_secret']
 #Connect to the binance api
 client = bf.init_client(api_key, api_secret)
 
-market = "LTCUSDT"
-leverage = 5
-margin_type = "CROSSED"
-period = "5m"
-
-bf.initialise_futures(client, _market=market, _leverage=leverage)
+bot_settings = json.load(open ("settings.json", "r"))
+market = bot_settings['market']
+leverage = int(bot_settings['leverage'])
+margin_type = bot_settings['margin_type']
+period = bot_settings['period']
 
 entry_price = 0
 exit_price_trigger = 0
 liquidation_price = 0
 in_position = False
 side = 0
+
+
+bf.initialise_futures(client, _market=market, _leverage=leverage)
 
 while True:
     if in_position == False:
