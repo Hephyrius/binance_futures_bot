@@ -1,4 +1,4 @@
-# binance_futures_bot
+# Binance Futures Bot
 
 A simple bot that trades futures on binance.
 
@@ -172,3 +172,7 @@ nohup python bot.py &
 tl;dr - Short answer yes and no!
 
 Hard to say, I guess it depends on market conditions, leverage and time period! 
+
+### Liquidation Price
+
+The bot does not take into account liquidation price, although a function has been created for this purpose. Be careful when using any leverage where a 2% move can lead to liquidation of positions - I advice against using leverage sizes that are crazy high (i.e. 30x+)
