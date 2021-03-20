@@ -316,34 +316,36 @@ client = RequestClient(api_key=api_key, secret_key=api_secret)
 market = "LTCUSDT"
 leverage = 3
 margin_type = "CROSSED"
+period = "5m"
 
-initialise_futures(client, _market=market)
+initialise_futures(client, _market=market, _leverage=leverage)
 
 entry_price = 0
 exit_price_trigger = 0
+liquidation_price = 0
 in_position = False
 side = 0
 
 while True:
     if in_position == False:
-        entry = get_signal(client, _market=market, _period="15m")
+        entry = get_signal(client, _market=market, _period=period)
         if entry[-2] == -1:
             print("SELL")
-            initialise_futures(client, _market=market)
+            initialise_futures(client, _market=market, _leverage=leverage)
             qty = calculate_position(client, market)
             execute_order(client, _qty=qty, _side="SELL" , _market=market)
             side = -1
             in_position = True
         elif entry[-2] == 1:
             print("BUY")
-            initialise_futures(client, _market=market)
+            initialise_futures(client, _market=market, _leverage=leverage)
             qty = calculate_position(client, market)
             execute_order(client, _qty=qty, _side="BUY" , _market=market)
             side = 1
             in_position = True
             
     elif in_position == True:
-        entry = get_signal(client, _market=market, _period="15m")
+        entry = get_signal(client, _market=market, _period=period)
         market_price = get_market_price(client, _market=market)
         
         if entry[-2] != side:
@@ -356,39 +358,42 @@ while True:
             entry_price = get_entry(client, _market=market)
          
         if exit_price_trigger == 0:
-            exit_price_trigger = entry_price
+            liquidation_price = get_liquidation(client, _market=market)
+            exit_price_trigger = liquidation_price
             
             if side == -1:
-                exit_price_trigger = exit_price_trigger * 1.05
+                exit_price_trigger = entry_price * 1.025
             elif side == 1:
-                exit_price_trigger = exit_price_trigger * 0.95
+                exit_price_trigger = entry_price * 0.975
                 
         
         if side == -1:
             
-            #if market_price < entry_price:
-            #    new_exit_price_trigger = (market_price*0.25) + (entry_price*0.75)
-            #    if new_exit_price_trigger < exit_price_trigger:
-            #        exit_price_trigger = new_exit_price_trigger
+            if market_price < entry_price:
+                new_exit_price_trigger = (liquidation_price * 0.2) + (market_price*0.4) + (entry_price*0.4)
+                if new_exit_price_trigger < exit_price_trigger:
+                    exit_price_trigger = new_exit_price_trigger
             
             if market_price > exit_price_trigger:
                 close_position(client, _market=market)
                 in_position = False
                 side = 0
                 exit_price_trigger = 0
+                liquidation_price = 0
             
         if side == 1:
             
-            #if market_price > entry_price:
-            #    new_exit_price_trigger = (market_price*0.25) + (entry_price*0.75)
-            #    if new_exit_price_trigger > exit_price_trigger:
-            #        exit_price_trigger = new_exit_price_trigger
+            if market_price > entry_price:
+                new_exit_price_trigger = (liquidation_price * 0.2) + (market_price*0.4) + (entry_price*0.4)
+                if new_exit_price_trigger > exit_price_trigger:
+                    exit_price_trigger = new_exit_price_trigger
             
             if market_price < exit_price_trigger:
                 close_position(client, _market=market)
                 in_position = False
                 side = 0
                 exit_price_trigger = 0
+                liquidation_price = 0
         
         
     time.sleep(10)
