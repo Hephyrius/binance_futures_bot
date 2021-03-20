@@ -10,13 +10,13 @@ If you'd like to support my work please consider:
 * [Following the youtube channel](https://www.youtube.com/channel/UCamWRprZmZ02TJAvGCCZzYg)
 
 ## Table of Contents  
-[Disclaimer](#Disclaimer)  
-[Trading Strategy](#Trading-Strategy)  
-[Bot Specifics](#Bot-Specifics)  
-[Installation](#Installation)  
-[Setup](#Setup)  
-[Useage](#Useage)  
-[Misc](#Misc)  
+* [Disclaimer](#Disclaimer)  
+* [Trading Strategy](#Trading-Strategy)  
+* [Bot Specifics](#Bot-Specifics)  
+* [Installation](#Installation)  
+* [Setup](#Setup)  
+* [Useage](#Useage)  
+* [Misc](#Misc)  
 
 ## Disclaimer
 
@@ -124,10 +124,10 @@ The bot can be modified for use with any USDT futures market, leverage and time 
 
 You should replace the market, leverage and period with values that are relevant.
 
-Market - this is the binance usdt futures market you would like to trade. it is usually the ticker of the coin followed by usdt. For insance ethereum would be "ETHUSDT" and tron would be "TRXUSDT". You can usually find the market name on binance.
-Period value - this represents the timescale at which the strategy will trade signals. represented as minutes, hours or days. Valid : 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d
-Leverage - This is the leverage amount you would like to apply to your trades. The Leverage on binance can go up to 125x, however the maximum leverage is dependant on market.
-Margin_type - this is if youd like to use ISOLATED margin and protect your account value or CROSSED and use the entire account value as margin for the trades.
+* Market - this is the binance usdt futures market you would like to trade. it is usually the ticker of the coin followed by usdt. For insance ethereum would be "ETHUSDT" and tron would be "TRXUSDT". You can usually find the market name on binance.
+* Period value - this represents the timescale at which the strategy will trade signals. represented as minutes, hours or days. Valid : 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d
+* Leverage - This is the leverage amount you would like to apply to your trades. The Leverage on binance can go up to 125x, however the maximum leverage is dependant on market.
+* Margin_type - this is if youd like to use ISOLATED margin and protect your account value or CROSSED and use the entire account value as margin for the trades.
 ```
 {
 	"market": "BTCUSDT",
