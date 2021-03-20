@@ -2,9 +2,9 @@
 
 A simple bot that trades futures on binance. 
 
-##### Table of Contents  
+## Table of Contents  
 [Disclaimer](#Disclaimer)  
-[Trading Strategy](#Trading-Strategy)
+[Trading Strategy](#Trading-Strategy)  
 [Setup](#Setup)  
 [Useage](#Useage)  
 [Modification](#Modification)  
