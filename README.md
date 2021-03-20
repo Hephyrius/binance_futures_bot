@@ -1,4 +1,4 @@
-# binance_futures_bot
+# Binance Futures Bot
 
 A simple bot that trades futures on binance.
 
