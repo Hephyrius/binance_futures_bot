@@ -2,5 +2,5 @@
 	"market": "BTCUSDT",
 	"leverage": "1",
 	"period": "1m",
-	"margin_type": "CROSSED",
+	"margin_type": "CROSSED"
 }
