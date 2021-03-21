@@ -112,7 +112,7 @@ def get_market_price(client, _market="BTCUSDT"):
 def get_market_precision(client, _market="BTCUSDT"):
     
     market_data = client.get_exchange_information()
-    precision = 8
+    precision = 3
     for market in market_data.symbols:
         if market.symbol == _market:
             precision = market.quantityPrecision
