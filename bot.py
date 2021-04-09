@@ -54,7 +54,7 @@ while True:
                 
                 #Let the order execute and then create a trailing stop market order.
                 time.sleep(3)
-                bf.submit_trailing_order(client, _market=market, _qty =qty,
+                bf.submit_trailing_order(client, _market=market, _qty =qty, _side="BUY",
                                          _callbackRate=trailing_percentage)
                 
             #if the second last signal in the generated set of data is 1, then open a LONG
@@ -77,7 +77,7 @@ while True:
                 
                 #Let the order execute and then create a trailing stop market order.
                 time.sleep(3)
-                bf.submit_trailing_order(client, _market=market, _qty =qty,
+                bf.submit_trailing_order(client, _market=market, _qty =qty, _side="SELL",
                                          _callbackRate=trailing_percentage)
         
         #If already in a position then check market and decide when to exit

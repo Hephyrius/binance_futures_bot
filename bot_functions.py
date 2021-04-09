@@ -110,7 +110,7 @@ def check_in_position(client, _market="BTCUSDT"):
     
     in_position = False
     
-    if position.positionAmt > 0:
+    if position.positionAmt != 0.0:
         in_position = True
         
     return in_position
@@ -120,12 +120,7 @@ def check_in_position(client, _market="BTCUSDT"):
 def submit_trailing_order(client, _market="BTCUSDT", _type = "TRAILING_STOP_MARKET", _side="BUY",
                           _qty = 1.0, _callbackRate=4):
     
-    _side = "BUY"
-    
     qty = float(_qty)
-    if qty > 0.0:
-        _side = "SELL"
-    
     if qty < 0.0:
         qty = qty * -1
         
