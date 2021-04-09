@@ -50,7 +50,7 @@ while True:
                 bf.initialise_futures(client, _market=market, _leverage=leverage)
                 qty = bf.calculate_position(client, market, _leverage=leverage)
                 
-                bf.enablePrint()
+                bf.enablePrint(std)
                 bf.execute_order(client, _qty=qty, _side="SELL" , _market=market)
                 bf.disablePrint()
                 
@@ -78,7 +78,7 @@ while True:
                 bf.initialise_futures(client, _market=market, _leverage=leverage)
                 qty = bf.calculate_position(client, market, _leverage=leverage)
                 
-                bf.enablePrint()
+                bf.enablePrint(std)
                 bf.execute_order(client, _qty=qty, _side="BUY" , _market=market)
                 bf.disablePrint()
                 
@@ -149,6 +149,6 @@ while True:
         time.sleep(6)
     except Exception as e:
         
-        bf.singlePrint(f"Encountered Exception {e}")
+        bf.singlePrint(f"Encountered Exception {e}", std)
         time.sleep(10)
 
