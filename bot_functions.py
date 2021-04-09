@@ -7,16 +7,18 @@ import numpy as np
 import time
 import sys, os
 
-# Disable
+def getStdOut():
+    return sys.stdout
+
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
 
 # Restore
-def enablePrint():
-    sys.stdout = sys.__stdout__
+def enablePrint(std):
+    sys.stdout = std
     
-def singlePrint(string):
-    enablePrint()
+def singlePrint(string, std):
+    enablePrint(std)
     print(string)
     blockPrint()
 
@@ -146,6 +148,7 @@ def submit_trailing_order(client, _market="BTCUSDT", _type = "TRAILING_STOP_MARK
                       callbackRate=_callbackRate,
                       quantity = qty,
                       workingType="CONTRACT_PRICE")
+    
 
 # get the current market price
 def get_market_price(client, _market="BTCUSDT"):

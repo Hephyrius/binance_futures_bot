@@ -19,13 +19,19 @@ period = bot_settings['period']
 trailing_percentage = float(bot_settings['trailing_percentage'])
 
 #turn off print unless we really need to print something
+std = bf.getStdOut()
 bf.blockPrint()
-bf.singlePrint("Bot Starting")
+bf.singlePrint("Bot Starting", std)
 
 #global values used by bot to keep track of state
 entry_price = 0
-side = 0
+exit_price_trigger = 0
+liquidation_price = 0
 in_position = False
+side = 0
+
+
+
 
 #Initialise the market leverage and margin type.
 bf.initialise_futures(client, _market=market, _leverage=leverage)
@@ -52,7 +58,7 @@ while True:
                 side = -1
                 in_position = True
                 
-                bf.singlePrint(f"Short: {qty} ${market_price} using x{leverage} leverage")
+                bf.singlePrint(f"Short: {qty} ${market_price} using x{leverage} leverage", std)
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
@@ -80,7 +86,7 @@ while True:
                 side = 1
                 in_position = True
                 
-                bf.singlePrint(f"Long: {qty} ${market_price} using x{leverage} leverage")
+                bf.singlePrint(f"Long: {qty} ${market_price} using x{leverage} leverage", std)
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
@@ -107,15 +113,15 @@ while True:
             #if we generated a signal that is the opposite side of what our position currently is
             #then sell our position. The bot will open a new position on the opposite side when it loops back around!
             if entry[-2] != side and entry[-2] != 0:
-                bf.singlePrint("Exit")
+                bf.singlePrint("Exit", std)
                 
                 bf.close_position(client, _market=market)
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
-                time.sleep(1)
+                time.sleep()
                 
-                bf.singlePrint(f"Exited Position: {qty} ${market_price}")
+                bf.singlePrint(f"Exited Position: {qty} ${market_price}", std)
                 
                 bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
                               _cause="Signal Change", _market_price=market_price, 
@@ -134,7 +140,7 @@ while True:
                 in_position = False
                 side = 0
 
-                bf.singlePrint(f"Trailing Stop Triggered: {qty} ${market_price}")  
+                bf.singlePrint(f"Trailing Stop Triggered: {qty} ${market_price}", std)  
                 
                 #close any open trailing stops we have one
                 client.cancel_all_orders(market)
