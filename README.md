@@ -40,20 +40,19 @@ The Bot makes use of Heikin Ashi candles for it's candle representations. This i
 
 ### Position Entry
 
-Positions are given to a bot as a list of historic "signals". These tell the bot when to go long, short or stay in whatever it was in before. 
+Positions are given to a bot as a list of historic "signals". These tell the bot when to go long, short or stay in whatever it was in before.
 
 * Long is represented by 1
 * Short is represented by -1
 * Stay/do nothing is represented by 0
 
-The bot uses the second last signal from the list of historic signals to make it's choice of action. This is because the last signal in the list is the current unresolved candle, and this is still in flux. 
+The bot uses the second last signal from the list of historic signals to make it's choice of action. This is because the last signal in the list is the current unresolved candle, as this is still in flux. 
 
 ### Position Exit
 The bot attempts to stay in positions as long as possible.
 
 * If the bot is in a position and the signal changes to counter of the current position, the bot will close position and open a new on on the opposite side
-* If the market moves 2% negative of entry (either long or short) the position will close
-* If the market moves 2% positive of entry price (again either long or short) a pseudo-trailing take-profit will kick in, and the position will close when the take profit is hit
+* When the bot enters a position it submits a trailing stop market that is a certain % away from entry. This will prevent big losses in case of bot failure and lock in bigger profits - depending on % used.
 
 ### Changing Strategies
 
@@ -97,6 +96,8 @@ def get_signal(client, _market="BTCUSDT", _period="15m", use_last=False):
     return entry
 ```
 
+NOTE: the use_last variable allows you to constantly pump out the last non-zero bot signal. This will allow the bot to enter a position as soon as the bot is initiated, rather than it waiting for a new signal to appear. This can also be chained with multi-timescale strategies for better potential performance.
+
 ## Installation
 
 ### Requirements
@@ -128,12 +129,14 @@ You should replace the market, leverage and period with values that are relevant
 * Period value - this represents the timescale at which the strategy will trade signals. represented as minutes, hours or days. Valid : 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d
 * Leverage - This is the leverage amount you would like to apply to your trades. The Leverage on binance can go up to 125x, however the maximum leverage is dependant on market.
 * Margin_type - this is if youd like to use ISOLATED margin and protect your account value or CROSSED and use the entire account value as margin for the trades.
+* trailing_percentage - percentage the trailing stop should follow. This will act as a fail safe incase the bot fails or enters a bad trade, and will help lock in profits on the good trades.
 ```
 {
 	"market": "BTCUSDT",
 	"leverage": "5",
 	"period": "5m",
-	"margin_type": "CROSSED"
+	"margin_type": "CROSSED",
+	"trailing_percentage": "2.0"
 }
 ```
 
