@@ -40,8 +40,6 @@ while True:
             
             #if the second last signal in the generated set of data is -1, then open a SHORT
             if entry[-2] == -1:
-                bf.singlePrint("SELL")
-                
                 
                 bf.initialise_futures(client, _market=market, _leverage=leverage)
                 qty = bf.calculate_position(client, market, _leverage=leverage)
@@ -53,6 +51,8 @@ while True:
                 market_price = bf.get_market_price(client, _market=market)
                 side = -1
                 in_position = True
+                
+                bf.singlePrint(f"Short: {qty} ${market_price} using x{leverage} leverage")
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
@@ -69,8 +69,6 @@ while True:
                 
             #if the second last signal in the generated set of data is 1, then open a LONG
             elif entry[-2] == 1:
-                bf.singlePrint("BUY")
-                
                 bf.initialise_futures(client, _market=market, _leverage=leverage)
                 qty = bf.calculate_position(client, market, _leverage=leverage)
                 
@@ -81,6 +79,8 @@ while True:
                 market_price = bf.get_market_price(client, _market=market)
                 side = 1
                 in_position = True
+                
+                bf.singlePrint(f"Long: {qty} ${market_price} using x{leverage} leverage")
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
@@ -115,6 +115,8 @@ while True:
                 client.cancel_all_orders(market)
                 time.sleep(1)
                 
+                bf.singlePrint(f"Exited Position: {qty} ${market_price}")
+                
                 bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
                               _cause="Signal Change", _market_price=market_price, 
                               _type="EXIT")
@@ -125,13 +127,14 @@ while True:
                 
             position_active = bf.check_in_position(client, market)
             if position_active == False:
-                bf.singlePrint("Trailing Stop Triggered")
 
                 bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
                   _cause="Signal Change", _market_price=market_price, 
                   _type="Trailing Stop")
                 in_position = False
                 side = 0
+
+                bf.singlePrint(f"Trailing Stop Triggered: {qty} ${market_price}")  
                 
                 #close any open trailing stops we have one
                 client.cancel_all_orders(market)
@@ -139,8 +142,7 @@ while True:
             
         time.sleep(6)
     except Exception as e:
-        bf.enablePrint()
-        print(f"Encountered Exception {e}")
-        bf.blockPrint()
+        
+        bf.singlePrint(f"Encountered Exception {e}")
         time.sleep(10)
 
