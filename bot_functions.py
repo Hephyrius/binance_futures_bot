@@ -58,7 +58,7 @@ def get_specific_positon(client, _market="BTCUSDT"):
 #close opened position
 def close_position(client, _market="BTCUSDT"):
     position = get_specific_positon(client, _market)
-    qty = position.positionAmt
+    qty = float(position.positionAmt)
     
     _side = "BUY"
     if qty > 0.0:
@@ -66,6 +66,8 @@ def close_position(client, _market="BTCUSDT"):
     
     if qty < 0.0:
         qty = qty * -1
+    
+    qty = str(qty)
     
     execute_order(client, _market=_market,
                   _qty = qty,
@@ -102,6 +104,40 @@ def calculate_position_size(client, usdt_balance=1.0, _market="BTCUSDT", _levera
     
     return qty
 
+#check if the position is still active, or if the trailing stop was hit.
+def check_in_position(client, _market="BTCUSDT"):
+    position = get_specific_positon(client, _market)
+    
+    in_position = False
+    
+    if position.positionAmt > 0:
+        in_position = True
+        
+    return in_position
+
+
+#Create a trailing stop to close our order if something goes bad, lock in profits or if the trade goes against us!
+def submit_trailing_order(client, _market="BTCUSDT", _type = "TRAILING_STOP_MARKET", _side="BUY",
+                          _qty = 1.0, _callbackRate=4):
+    
+    _side = "BUY"
+    
+    qty = float(_qty)
+    if qty > 0.0:
+        _side = "SELL"
+    
+    if qty < 0.0:
+        qty = qty * -1
+        
+    qty = str(qty)
+        
+    client.post_order(symbol=_market,
+                      ordertype=_type,
+                      side=_side,
+                      callbackRate=_callbackRate,
+                      quantity = qty,
+                      workingType="CONTRACT_PRICE")
+
 # get the current market price
 def get_market_price(client, _market="BTCUSDT"):
     price = client.get_symbol_price_ticker(_market)
@@ -121,8 +157,7 @@ def get_market_precision(client, _market="BTCUSDT"):
 
 # round the position size we can open to the precision of the market
 def round_to_precision(_qty, _precision):
-    new_qty = str(_qty).split(".")[1][:_precision]
-    new_qty = str(_qty).split(".")[0] + "." + new_qty
+    new_qty = "{:0.0{}f}".format(_qty , _precision)
     return float(new_qty)
 
 # convert from client candle data into a set of lists

@@ -16,13 +16,12 @@ market = bot_settings['market']
 leverage = int(bot_settings['leverage'])
 margin_type = bot_settings['margin_type']
 period = bot_settings['period']
+trailing_percentage = float(bot_settings['trailing_percentage'])
 
 #global values used by bot to keep track of state
 entry_price = 0
-exit_price_trigger = 0
-liquidation_price = 0
-in_position = False
 side = 0
+in_position = False
 
 #Initialise the market leverage and margin type.
 bf.initialise_futures(client, _market=market, _leverage=leverage)
@@ -44,9 +43,19 @@ while True:
             market_price = bf.get_market_price(client, _market=market)
             side = -1
             in_position = True
+            
+            #close any open trailing stops we have
+            client.cancel_all_orders()
+            time.sleep(0.5)
+
             bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
-             _cause="Signal Change", _trigger_price=0, 
-             _market_price=market_price, _type="Enter")
+              _cause="Signal Change", _trigger_price=0, 
+              _market_price=market_price, _type="Enter")
+            
+            #Let the order execute and then create a trailing stop market order.
+            time.sleep(1)
+            bf.submit_trailing_order(client, _market=market, _qty =qty,
+                                     _callbackRate=trailing_percentage)
             
         #if the second last signal in the generated set of data is 1, then open a LONG
         elif entry[-2] == 1:
@@ -57,9 +66,19 @@ while True:
             market_price = bf.get_market_price(client, _market=market)
             side = 1
             in_position = True
+            
+            #close any open trailing stops we have
+            client.cancel_all_orders()
+            time.sleep(0.5)
+            
             bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
-             _cause="Signal Change", _trigger_price=0, 
-             _market_price=market_price, _type="Enter")
+              _cause="Signal Change", _trigger_price=0, 
+              _market_price=market_price, _type="Enter")
+            
+            #Let the order execute and then create a trailing stop market order.
+            time.sleep(1)
+            bf.submit_trailing_order(client, _market=market, _qty =qty,
+                                     _callbackRate=trailing_percentage)
     
     #If already in a position then check market and decide when to exit
     elif in_position == True:
@@ -74,72 +93,32 @@ while True:
         #then sell our position. The bot will open a new position on the opposite side when it loops back around!
         if entry[-2] != side and entry[-2] != 0:
             bf.close_position(client, _market=market)
+            
+            #close any open trailing stops we have
+            client.cancel_all_orders()
+            time.sleep(0.5)
+            
             bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
-                         _cause="Signal Change", _trigger_price=exit_price_trigger, 
-                         _market_price=market_price, _type="EXIT")
+                          _cause="Signal Change", _market_price=market_price, 
+                          _type="EXIT")
             
             in_position = False
             side = 0
-            exit_price_trigger = 0
-        
-        #grab our entry price for our position
-        if entry_price == 0:
-            entry_price = bf.get_entry(client, _market=market)
-        
-        #set exit trigger that are 2% away from our entry - depending on which side we are. 
-        if exit_price_trigger == 0:
-            liquidation_price = bf.get_liquidation(client, _market=market)
-            exit_price_trigger = liquidation_price
             
-            if side == -1:
-                exit_price_trigger = entry_price * 1.02
-            elif side == 1:
-                exit_price_trigger = entry_price * 0.98
-                
-        # If we are short then consider triggering an exit in this block
-        if side == -1:
             
-            #if the market has moved 2% in favour of our position, set a new exit trigger
-            #this trigger will try to retain half of our gains!
-            if market_price < entry_price * 0.98:
-                new_exit_price_trigger = (market_price*0.5) + (entry_price * 0.5)
-                if new_exit_price_trigger < exit_price_trigger:
-                    exit_price_trigger = new_exit_price_trigger
+        position_active = bf.check_in_position(client, market)
+        if position_active == False:
+            bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
+              _cause="Signal Change", _market_price=market_price, 
+              _type="Trailing Stop")
+            in_position = False
+            side = 0
             
-            #if the price goes above our exit trigger, then exit the trade
-            if market_price > exit_price_trigger:
-                bf.close_position(client, _market=market)
-                bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side, 
-                             _cause="Trigger Executed", _trigger_price=exit_price_trigger, 
-                             _market_price=market_price, _type="EXIT")
-            
-                in_position = False
-                side = 0
-                exit_price_trigger = 0
-                liquidation_price = 0
+            #close any open trailing stops we have one
+            client.cancel_all_orders()
+            time.sleep(0.5)
         
-        # If we are LONG then consider triggering an exit in this block
-        if side == 1:
-            
-            #if the market has moved 2% in favour of our position, set a new exit trigger
-            #this trigger will try to retain half of our gains!
-            if market_price > entry_price * 1.02:
-                new_exit_price_trigger = (market_price*0.5) + (entry_price*0.5)
-                if new_exit_price_trigger > exit_price_trigger:
-                   exit_price_trigger = new_exit_price_trigger
-                   
-            #if the price goes below our exit trigger, then exit the trade
-            if market_price < exit_price_trigger:
-                bf.close_position(client, _market=market)
-                bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side, 
-                             _cause="Trigger Executed", _trigger_price=exit_price_trigger, 
-                             _market_price=market_price, _type="EXIT")
-                in_position = False
-                side = 0
-                exit_price_trigger = 0
-                liquidation_price = 0
-        
-        
-    #Sleep for a few seconds - Save bandwidth, compute and prevent rate limiting
     time.sleep(6)
     
+#%%
+
