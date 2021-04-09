@@ -174,7 +174,7 @@ nohup python bot.py &
 
 tl;dr - Short answer yes and no!
 
-Hard to say, I guess it depends on market conditions, leverage and time period! 
+This really depends on market conditions, leverage and time period! The bot seems to struggle when the market is side-ways, but seems to excell when trending. But again this depends on settings and specific markets. Nothing is guaranteed ( refer to [Disclaimer](#Disclaimer) ). 
 
 ### Liquidation Price
 
