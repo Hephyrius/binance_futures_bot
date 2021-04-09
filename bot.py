@@ -46,14 +46,14 @@ while True:
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
-                time.sleep(0.5)
+                time.sleep(3)
     
                 bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
                   _cause="Signal Change", _trigger_price=0, 
                   _market_price=market_price, _type="Enter")
                 
                 #Let the order execute and then create a trailing stop market order.
-                time.sleep(1)
+                time.sleep(3)
                 bf.submit_trailing_order(client, _market=market, _qty =qty,
                                          _callbackRate=trailing_percentage)
                 
@@ -69,14 +69,14 @@ while True:
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
-                time.sleep(0.5)
+                time.sleep(3)
                 
                 bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
                   _cause="Signal Change", _trigger_price=0, 
                   _market_price=market_price, _type="Enter")
                 
                 #Let the order execute and then create a trailing stop market order.
-                time.sleep(1)
+                time.sleep(3)
                 bf.submit_trailing_order(client, _market=market, _qty =qty,
                                          _callbackRate=trailing_percentage)
         
@@ -96,7 +96,7 @@ while True:
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
-                time.sleep(0.5)
+                time.sleep(1)
                 
                 bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
                               _cause="Signal Change", _market_price=market_price, 
@@ -115,12 +115,11 @@ while True:
                 side = 0
                 
                 #close any open trailing stops we have one
-                client.cancel_all_orders()
-                time.sleep(0.5)
+                client.cancel_all_orders(market)
+                time.sleep(1)
             
         time.sleep(6)
     except Exception as e:
         print(f"Encountered Exception {e}")
         time.sleep(10)
-#%%
 
