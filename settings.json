@@ -1,7 +1,7 @@
 {
 	"market": "BTCUSDT",
 	"leverage": "5",
-	"period": "15m",
+	"trading_periods": "5m,15m",
 	"margin_type": "CROSSED",
 	"trailing_percentage": "2.0"
 }

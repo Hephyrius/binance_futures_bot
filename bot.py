@@ -15,7 +15,7 @@ bot_settings = json.load(open ("settings.json", "r"))
 market = bot_settings['market']
 leverage = int(bot_settings['leverage'])
 margin_type = bot_settings['margin_type']
-period = bot_settings['period']
+confirmation_periods = bot_settings['trading_periods'].split(",")
 trailing_percentage = float(bot_settings['trailing_percentage'])
 
 #turn off print unless we really need to print something
@@ -31,8 +31,6 @@ in_position = False
 side = 0
 
 
-
-
 #Initialise the market leverage and margin type.
 bf.initialise_futures(client, _market=market, _leverage=leverage)
 
@@ -42,70 +40,27 @@ while True:
         if in_position == False:
             
             #generate signal data for the last 500 candles
-            entry = bf.get_signal(client, _market=market, _period=period)
+            entry = bf.get_multi_scale_signal(client, _market=market, _periods=confirmation_periods)
             
             #if the second last signal in the generated set of data is -1, then open a SHORT
             if entry[-2] == -1:
-                
-                bf.initialise_futures(client, _market=market, _leverage=leverage)
-                qty = bf.calculate_position(client, market, _leverage=leverage)
-                
-                bf.enablePrint(std)
-                bf.execute_order(client, _qty=qty, _side="SELL" , _market=market)
-                bf.disablePrint()
-                
-                market_price = bf.get_market_price(client, _market=market)
-                side = -1
-                in_position = True
-                
-                bf.singlePrint(f"Short: {qty} ${market_price} using x{leverage} leverage", std)
-                
-                #close any open trailing stops we have
-                client.cancel_all_orders(market)
-                time.sleep(3)
-    
-                bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
-                  _cause="Signal Change", _trigger_price=0, 
-                  _market_price=market_price, _type="Enter")
-                
-                #Let the order execute and then create a trailing stop market order.
-                time.sleep(3)
-                bf.submit_trailing_order(client, _market=market, _qty =qty, _side="BUY",
-                                         _callbackRate=trailing_percentage)
+                qty, side, in_position = bf.handle_signal(client, std, 
+                                                          market=market, leverage=leverage, 
+                                                          order_side="SELL", stop_side="BUY", 
+                                                          _callbackRate=trailing_percentage)
                 
             #if the second last signal in the generated set of data is 1, then open a LONG
             elif entry[-2] == 1:
-                bf.initialise_futures(client, _market=market, _leverage=leverage)
-                qty = bf.calculate_position(client, market, _leverage=leverage)
-                
-                bf.enablePrint(std)
-                bf.execute_order(client, _qty=qty, _side="BUY" , _market=market)
-                bf.disablePrint()
-                
-                market_price = bf.get_market_price(client, _market=market)
-                side = 1
-                in_position = True
-                
-                bf.singlePrint(f"Long: {qty} ${market_price} using x{leverage} leverage", std)
-                
-                #close any open trailing stops we have
-                client.cancel_all_orders(market)
-                time.sleep(3)
-                
-                bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
-                  _cause="Signal Change", _trigger_price=0, 
-                  _market_price=market_price, _type="Enter")
-                
-                #Let the order execute and then create a trailing stop market order.
-                time.sleep(3)
-                bf.submit_trailing_order(client, _market=market, _qty =qty, _side="SELL",
-                                         _callbackRate=trailing_percentage)
+                qty, side, in_position = bf.handle_signal(client, std, 
+                                                          market=market, leverage=leverage, 
+                                                          order_side="BUY", stop_side="SELL", 
+                                                          _callbackRate=trailing_percentage)
         
         #If already in a position then check market and decide when to exit
         elif in_position == True:
             
             #generate signal data for the last 500 candles
-            entry = bf.get_signal(client, _market=market, _period=period)
+            entry = bf.get_multi_scale_signal(client, _market=market, _periods=confirmation_periods)
             
             #get the last market price
             market_price = bf.get_market_price(client, _market=market)
@@ -119,7 +74,7 @@ while True:
                 
                 #close any open trailing stops we have
                 client.cancel_all_orders(market)
-                time.sleep()
+                time.sleep(3)
                 
                 bf.singlePrint(f"Exited Position: {qty} ${market_price}", std)
                 
@@ -133,22 +88,22 @@ while True:
                 
             position_active = bf.check_in_position(client, market)
             if position_active == False:
-
+    
                 bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
                   _cause="Signal Change", _market_price=market_price, 
                   _type="Trailing Stop")
                 in_position = False
                 side = 0
-
+    
                 bf.singlePrint(f"Trailing Stop Triggered: {qty} ${market_price}", std)  
                 
                 #close any open trailing stops we have one
                 client.cancel_all_orders(market)
-                time.sleep(1)
+                time.sleep(3)
             
-        time.sleep(6)
+        time.sleep(15)
     except Exception as e:
         
         bf.singlePrint(f"Encountered Exception {e}", std)
-        time.sleep(10)
+        time.sleep(15)
 

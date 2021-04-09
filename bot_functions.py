@@ -135,18 +135,12 @@ def check_in_position(client, _market="BTCUSDT"):
 #Create a trailing stop to close our order if something goes bad, lock in profits or if the trade goes against us!
 def submit_trailing_order(client, _market="BTCUSDT", _type = "TRAILING_STOP_MARKET", _side="BUY",
                           _qty = 1.0, _callbackRate=4):
-    
-    qty = float(_qty)
-    if qty < 0.0:
-        qty = qty * -1
-        
-    qty = str(qty)
-        
+            
     client.post_order(symbol=_market,
                       ordertype=_type,
                       side=_side,
                       callbackRate=_callbackRate,
-                      quantity = qty,
+                      quantity = _qty,
                       workingType="CONTRACT_PRICE")
     
 
@@ -214,6 +208,37 @@ def construct_heikin_ashi(o, h, l, c):
         h_c.append(close_price)
 
     return h_o, h_h, h_l, h_c
+
+def handle_signal(client, std, market="BTCUSDT", leverage=3, order_side="BUY", 
+                  stop_side="SELL", _callbackRate=2.0):
+    initialise_futures(client, _market=market, _leverage=leverage)
+    qty = calculate_position(client, market, _leverage=leverage)
+    
+    enablePrint(std)
+    execute_order(client, _qty=qty, _side=order_side, _market=market)
+    blockPrint()
+    
+    market_price = get_market_price(client, _market=market)
+    side = -1
+    in_position = True
+    
+    singlePrint(f"{order_side}: {qty} ${market_price} using x{leverage} leverage", std)
+    
+    #close any open trailing stops we have
+    client.cancel_all_orders(market)
+    time.sleep(3)
+
+    log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
+      _cause="Signal Change", _trigger_price=0, 
+      _market_price=market_price, _type=order_side)
+    
+    #Let the order execute and then create a trailing stop market order.
+    time.sleep(3)
+    submit_trailing_order(client, _market=market, _qty =qty, _side=stop_side,
+                             _callbackRate=_callbackRate)
+    
+    
+    return qty, side, in_position
 
 #create a dataframe for our candles
 def to_dataframe(o, h, l, c, v):
@@ -336,6 +361,35 @@ def get_signal(client, _market="BTCUSDT", _period="15m", use_last=False):
     ohlcv = to_dataframe(h_o, h_h, h_l, h_c, v)
     entry = trading_signal(h_o, h_h, h_l, h_c, use_last)
     return entry
+
+#get signal that is confirmed across multiple time scales
+def get_multi_scale_signal(client, _market="BTCUSDT", _periods=["1m"]):
+    
+    signals = np.zeros(499)
+    use_last = False
+    
+    for i, v in enumerate(_periods):
+        if i != 0:
+            use_last = True
+            
+        _signal = get_signal(client, _market, _period= v, use_last=use_last)
+        signals = signals + np.array(_signal)
+    
+    signals = signals / len(_periods)
+    
+    trade_signal = []
+    
+    for i, v in enumerate(list(signals)):
+        
+        if v == -1:
+            trade_signal.append(-1)
+        elif v == 1:
+            trade_signal.append(1)
+        else:
+            trade_signal.append(0)
+    
+    return trade_signal
+
 
 #calculate a rounded position size for the bot, based on current USDT holding, leverage and market
 def calculate_position(client, _market="BTCUSDT", _leverage=1):
