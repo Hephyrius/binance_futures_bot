@@ -5,6 +5,20 @@ from binance_f.model.constant import *
 import pandas as pd
 import numpy as np
 import time
+import sys, os
+
+# Disable
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+
+# Restore
+def enablePrint():
+    sys.stdout = sys.__stdout__
+    
+def singlePrint(string):
+    enablePrint()
+    print(string)
+    blockPrint()
 
 #create a binance request client
 def init_client(api_key, api_secret):

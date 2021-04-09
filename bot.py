@@ -18,6 +18,10 @@ margin_type = bot_settings['margin_type']
 period = bot_settings['period']
 trailing_percentage = float(bot_settings['trailing_percentage'])
 
+#turn off print unless we really need to print something
+bf.blockPrint()
+bf.singlePrint("Bot Starting")
+
 #global values used by bot to keep track of state
 entry_price = 0
 side = 0
@@ -36,10 +40,16 @@ while True:
             
             #if the second last signal in the generated set of data is -1, then open a SHORT
             if entry[-2] == -1:
-                print("SELL")
+                bf.singlePrint("SELL")
+                
+                
                 bf.initialise_futures(client, _market=market, _leverage=leverage)
                 qty = bf.calculate_position(client, market, _leverage=leverage)
+                
+                bf.enablePrint()
                 bf.execute_order(client, _qty=qty, _side="SELL" , _market=market)
+                bf.disablePrint()
+                
                 market_price = bf.get_market_price(client, _market=market)
                 side = -1
                 in_position = True
@@ -59,10 +69,15 @@ while True:
                 
             #if the second last signal in the generated set of data is 1, then open a LONG
             elif entry[-2] == 1:
-                print("BUY")
+                bf.singlePrint("BUY")
+                
                 bf.initialise_futures(client, _market=market, _leverage=leverage)
                 qty = bf.calculate_position(client, market, _leverage=leverage)
+                
+                bf.enablePrint()
                 bf.execute_order(client, _qty=qty, _side="BUY" , _market=market)
+                bf.disablePrint()
+                
                 market_price = bf.get_market_price(client, _market=market)
                 side = 1
                 in_position = True
@@ -92,6 +107,8 @@ while True:
             #if we generated a signal that is the opposite side of what our position currently is
             #then sell our position. The bot will open a new position on the opposite side when it loops back around!
             if entry[-2] != side and entry[-2] != 0:
+                bf.singlePrint("Exit")
+                
                 bf.close_position(client, _market=market)
                 
                 #close any open trailing stops we have
@@ -108,6 +125,8 @@ while True:
                 
             position_active = bf.check_in_position(client, market)
             if position_active == False:
+                bf.singlePrint("Trailing Stop Triggered")
+
                 bf.log_trade(_qty=qty, _market=market, _leverage=leverage, _side=side,
                   _cause="Signal Change", _market_price=market_price, 
                   _type="Trailing Stop")
@@ -120,6 +139,8 @@ while True:
             
         time.sleep(6)
     except Exception as e:
+        bf.enablePrint()
         print(f"Encountered Exception {e}")
+        bf.blockPrint()
         time.sleep(10)
 
