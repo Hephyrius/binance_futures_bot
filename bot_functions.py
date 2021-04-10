@@ -366,11 +366,9 @@ def get_signal(client, _market="BTCUSDT", _period="15m", use_last=False):
 def get_multi_scale_signal(client, _market="BTCUSDT", _periods=["1m"]):
     
     signals = np.zeros(499)
-    use_last = False
+    use_last = True
     
     for i, v in enumerate(_periods):
-        if i != 0:
-            use_last = True
             
         _signal = get_signal(client, _market, _period= v, use_last=use_last)
         signals = signals + np.array(_signal)

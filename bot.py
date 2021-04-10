@@ -67,7 +67,7 @@ while True:
             
             #if we generated a signal that is the opposite side of what our position currently is
             #then sell our position. The bot will open a new position on the opposite side when it loops back around!
-            if entry[-2] != side and entry[-2] != 0:
+            if entry[-2] != side:
                 bf.singlePrint("Exit", std)
                 
                 bf.close_position(client, _market=market)
