@@ -126,7 +126,7 @@ def check_in_position(client, _market="BTCUSDT"):
     
     in_position = False
     
-    if position.positionAmt != 0.0:
+    if float(position.positionAmt) != 0.0:
         in_position = True
         
     return in_position
