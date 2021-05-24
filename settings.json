@@ -3,5 +3,6 @@
 	"leverage": "5",
 	"trading_periods": "5m,15m",
 	"margin_type": "CROSSED",
-	"trailing_percentage": "2.0"
+	"trailing_percentage": "2.0",
+	"api_url" : "https://fapi.binance.com/"
 }
