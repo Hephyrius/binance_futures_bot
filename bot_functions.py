@@ -219,7 +219,13 @@ def handle_signal(client, std, market="BTCUSDT", leverage=3, order_side="BUY",
     blockPrint()
 
     market_price = get_market_price(client, _market=market)
+
     side = -1
+    if order_side == "BUY":
+        side = 1
+    else:
+        side = -1
+        
     in_position = True
 
     singlePrint(f"{order_side}: {qty} ${market_price} using x{leverage} leverage", std)
