@@ -115,8 +115,8 @@ def calculate_position_size(client, usdt_balance=1.0, _market="BTCUSDT", _levera
     price = client.get_symbol_price_ticker(_market)
     price = price[0].price
 
-    qty = (int(usdt_balance) / price) * _leverage
-    qty = qty * 0.99
+    qty = (float(usdt_balance) / price) * _leverage
+    qty = round(qty * 0.99,8)
 
     return qty
 
