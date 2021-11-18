@@ -3,11 +3,7 @@
 A simple bot that trades futures on binance.
 
 ## Supporting this project
-If you'd like to support my work please consider: 
-
-* [donating to the patreon](https://www.patreon.com/SingularitAI)
-* [Supporting on github](https://github.com/sponsors/hephyrius)
-* [Following the youtube channel](https://www.youtube.com/channel/UCamWRprZmZ02TJAvGCCZzYg)
+* If you appreciate my work send all crypto donations in Eth, Bnb, Matic, Avax etc on any chain to : 0xe0a09b49721FBD8B23c67a3a9fdE44be4412B8fD
 
 ## Table of Contents  
 * [Disclaimer](#Disclaimer)  
