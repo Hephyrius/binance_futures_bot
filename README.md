@@ -11,7 +11,7 @@ A simple bot that trades futures on binance.
 * [Bot Specifics](#Bot-Specifics)  
 * [Installation](#Installation)  
 * [Setup](#Setup)  
-* [Useage](#Useage)  
+* [Usage](#Usage)  
 * [Misc](#Misc)  
 
 ## Disclaimer
@@ -148,7 +148,7 @@ This file is where you should put your API keys. The API Keys should have Future
 ```
 
 
-## Useage
+## Usage
 
 Once you've modified Keys.json and Settings.json you should be ready to go.
 
