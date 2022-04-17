@@ -2,8 +2,9 @@
 
 A simple bot that trades futures on binance.
 
-## Supporting this project
-* If you appreciate my work send all crypto donations in Eth, Bnb, Matic, Avax etc on any chain to : 0xe0a09b49721FBD8B23c67a3a9fdE44be4412B8fD
+## Contributing
+
+Feel free to contribute to the project and propose changes. I will review and accept the good PRs
 
 ## Table of Contents  
 * [Disclaimer](#Disclaimer)  
